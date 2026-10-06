@@ -1,0 +1,9 @@
+[
+  { "id": "astro", "name": "Astro" },
+  { "id": "typescript", "name": "TypeScript" },
+  { "id": "distributed-system", "name": "分布式系统" },
+  { "id": "notes", "name": "学习笔记" },
+  { "id": "mapreduce", "name": "MapReduce" },
+  { "id": "go", "name": "Go" },
+  { "id": "mit-6-5840", "name": "MIT 6.5840" }
+]

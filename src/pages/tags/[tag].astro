@@ -1,0 +1,32 @@
+---
+import type { GetStaticPaths } from "astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getVisiblePosts, tags, withBase } from "../../lib/content";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getVisiblePosts();
+  return tags
+    .map((tag) => ({ tag, posts: posts.filter((post) => post.data.tags.includes(tag.id)) }))
+    .filter((item) => item.posts.length > 0)
+    .map((item) => ({ params: { tag: item.tag.id }, props: item }));
+};
+
+const { tag, posts } = Astro.props as any;
+---
+
+<BaseLayout title={`#${tag.name}`} description={`包含“${tag.name}”标签的文章。`}>
+  <div class="page-shell narrow-shell">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href={withBase("/tags/")}>全部标签</a><span>/</span><span>#{tag.name}</span>
+    </nav>
+    <header class="column-header tag-header">
+      <p class="eyebrow">TAG</p>
+      <h1>#{tag.name}</h1>
+      <p>共 {posts.length} 篇相关文章，按发布时间从新到旧排列。</p>
+    </header>
+    <div class="post-list">
+      {posts.map((post: any) => <PostCard post={post} />)}
+    </div>
+  </div>
+</BaseLayout>

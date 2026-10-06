@@ -1,0 +1,27 @@
+{
+  "name": "zycpopo-blog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/fetch-contributions.mjs && astro check && astro build",
+    "preview": "astro preview",
+    "new:post": "node scripts/new-post.mjs",
+    "fetch:contributions": "node scripts/fetch-contributions.mjs --force"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "latest",
+    "@astrojs/rss": "latest",
+    "@astrojs/sitemap": "latest",
+    "astro": "latest",
+    "katex": "latest",
+    "marked": "latest",
+    "mermaid": "latest",
+    "rehype-katex": "latest",
+    "remark-math": "latest"
+  },
+  "devDependencies": {
+    "@astrojs/check": "latest",
+    "typescript": "^6.0.0"
+  }
+}

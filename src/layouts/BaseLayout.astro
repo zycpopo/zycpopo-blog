@@ -1,0 +1,98 @@
+---
+import "katex/dist/katex.min.css";
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import site from "../data/site.json";
+import { absoluteUrl, withBase } from "../lib/content";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+  type?: "website" | "article";
+  structuredData?: Record<string, unknown>;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  canonicalPath = Astro.url.pathname,
+  type = "website",
+  structuredData,
+  noindex = false
+} = Astro.props;
+const pageTitle = title ? `${title}｜${site.name}` : site.name;
+const canonical = absoluteUrl(canonicalPath);
+---
+
+<!doctype html>
+<html lang={site.language}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#0b1628" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={`${withBase("/favicon.svg")}?v=2`} />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} RSS`} href={withBase("/rss.xml")} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <title>{pageTitle}</title>
+    {structuredData && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      const enhanceCodeBlocks = () => {
+        document.querySelectorAll("pre:not([data-enhanced])").forEach((pre) => {
+          if (pre.getAttribute("data-language") === "mermaid" || pre.querySelector("code.language-mermaid")) return;
+          pre.setAttribute("data-enhanced", "true");
+          const button = document.createElement("button");
+          button.className = "copy-code";
+          button.type = "button";
+          button.textContent = "复制";
+          button.addEventListener("click", async () => {
+            const code = pre.querySelector("code")?.textContent ?? "";
+            await navigator.clipboard.writeText(code);
+            button.textContent = "已复制";
+            window.setTimeout(() => button.textContent = "复制", 1500);
+          });
+          pre.append(button);
+        });
+      };
+
+      const renderMermaid = async () => {
+        const blocks = [...document.querySelectorAll("pre[data-language='mermaid'] > code, pre > code.language-mermaid")];
+        if (!blocks.length) return;
+        const { default: mermaid } = await import("mermaid");
+        mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "strict" });
+        blocks.forEach((block) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "mermaid";
+          wrapper.textContent = block.textContent ?? "";
+          block.parentElement?.replaceWith(wrapper);
+        });
+        await mermaid.run({ querySelector: ".mermaid" });
+      };
+
+      enhanceCodeBlocks();
+      renderMermaid();
+    </script>
+  </body>
+</html>

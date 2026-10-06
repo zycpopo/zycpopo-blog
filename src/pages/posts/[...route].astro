@@ -1,0 +1,82 @@
+---
+import type { GetStaticPaths } from "astro";
+import { render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import Pagination from "../../components/Pagination.astro";
+import PostCard from "../../components/PostCard.astro";
+import PostDetail from "../../components/PostDetail.astro";
+import { absoluteUrl, getColumn, getVisiblePosts, postSlug } from "../../lib/content";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const PAGE_SIZE = 10;
+  const posts = await getVisiblePosts();
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  const listPaths = Array.from({ length: totalPages }, (_, index) => {
+    const page = index + 1;
+    return {
+      params: { route: page === 1 ? undefined : String(page) },
+      props: {
+        kind: "list",
+        posts: posts.slice(index * PAGE_SIZE, page * PAGE_SIZE),
+        currentPage: page,
+        totalPages
+      }
+    };
+  });
+
+  const postPaths = posts.map((post) => {
+    const columnPosts = posts.filter((item) => item.data.column === post.data.column);
+    const index = columnPosts.findIndex((item) => item.id === post.id);
+    return {
+      params: { route: postSlug(post) },
+      props: {
+        kind: "post",
+        post,
+        previous: index > 0 ? columnPosts[index - 1] : undefined,
+        next: index < columnPosts.length - 1 ? columnPosts[index + 1] : undefined
+      }
+    };
+  });
+
+  return [...listPaths, ...postPaths];
+};
+
+const props = Astro.props as any;
+let Content: any;
+let headings: any[] = [];
+if (props.kind === "post") {
+  const rendered = await render(props.post);
+  Content = rendered.Content;
+  headings = rendered.headings;
+}
+
+const isPost = props.kind === "post";
+const pageTitle = isPost ? props.post.data.title : (props.currentPage > 1 ? `全部文章 · 第 ${props.currentPage} 页` : "全部文章");
+const description = isPost ? props.post.data.description : "按发布时间浏览全部技术文章。";
+const column = isPost ? getColumn(props.post.data.column) : undefined;
+const structuredData = isPost ? {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: props.post.data.title,
+  description: props.post.data.description,
+  datePublished: props.post.data.publishDate.toISOString(),
+  dateModified: (props.post.data.updatedDate ?? props.post.data.publishDate).toISOString(),
+  mainEntityOfPage: absoluteUrl(`/posts/${postSlug(props.post)}/`),
+  articleSection: column?.name
+} : undefined;
+---
+
+<BaseLayout title={pageTitle} description={description} canonicalPath={isPost ? `/posts/${postSlug(props.post)}/` : Astro.url.pathname} type={isPost ? "article" : "website"} structuredData={structuredData}>
+  {isPost ? (
+    <PostDetail post={props.post} Content={Content} headings={headings} previous={props.previous} next={props.next} />
+  ) : (
+    <div class="page-shell narrow-shell">
+      <PageIntro eyebrow="ALL POSTS" title="全部文章" description="按发布时间从新到旧排列，持续记录学习与实践。" />
+      <div class="post-list">
+        {props.posts.map((post: any) => <PostCard post={post} />)}
+      </div>
+      <Pagination current={props.currentPage} total={props.totalPages} />
+    </div>
+  )}
+</BaseLayout>

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "engineering-notes",
+    "name": "工程实践",
+    "description": "关于软件设计、开发工具和工程方法的实践记录。",
+    "order": 1
+  },
+  {
+    "id": "computer-systems",
+    "name": "计算机系统",
+    "description": "从网络、操作系统到分布式系统的学习笔记。",
+    "order": 2
+  },
+  {
+    "id": "distributed-systems",
+    "name": "分布式系统",
+    "description": "关于分布式系统原理、MIT 6.5840 实验、存储与容错的学习记录。",
+    "order": 3
+  }
+]

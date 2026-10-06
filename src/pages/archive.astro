@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageIntro from "../components/PageIntro.astro";
+import { formatDate, getColumn, getVisiblePosts, postSlug, withBase } from "../lib/content";
+
+const posts = await getVisiblePosts();
+const grouped = posts.reduce<Record<string, typeof posts>>((acc, post) => {
+  const year = String(post.data.publishDate.getFullYear());
+  (acc[year] ??= []).push(post);
+  return acc;
+}, {});
+const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+---
+
+<BaseLayout title="归档" description="按照年份回顾全部文章。">
+  <div class="page-shell narrow-shell">
+    <PageIntro eyebrow="ARCHIVE" title="文章归档" description={`共 ${posts.length} 篇文章，按发布时间整理。`} />
+    <div class="archive-list">
+      {years.map((year) => (
+        <section class="archive-year">
+          <h2>{year}</h2>
+          <ol>
+            {grouped[year].map((post) => {
+              const column = getColumn(post.data.column);
+              return (
+                <li>
+                  <time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate).replace(`${year}年`, "")}</time>
+                  <a href={withBase(`/posts/${postSlug(post)}/`)}>{post.data.title}</a>
+                  {column && <span>{column.name}</span>}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

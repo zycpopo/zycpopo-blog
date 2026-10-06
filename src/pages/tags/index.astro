@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import { countByTag, getVisiblePosts, tags, withBase } from "../../lib/content";
+
+const posts = await getVisiblePosts();
+const visibleTags = tags
+  .map((tag) => ({ ...tag, count: countByTag(posts, tag.id) }))
+  .filter((tag) => tag.count > 0)
+  .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+---
+
+<BaseLayout title="标签" description="按照技术关键词查找文章。">
+  <div class="page-shell narrow-shell">
+    <PageIntro eyebrow="TAGS" title="标签" description="标签连接不同专栏中讨论相同技术主题的文章。" />
+    <div class="tag-cloud">
+      {visibleTags.map((tag) => (
+        <a href={withBase(`/tags/${tag.id}/`)}><span>#{tag.name}</span><strong>{tag.count}</strong></a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

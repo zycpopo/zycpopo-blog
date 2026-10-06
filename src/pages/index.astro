@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import HomeSidebar from "../components/HomeSidebar.astro";
+import PersonalOverview from "../components/PersonalOverview.astro";
+import { getVisiblePosts, withBase } from "../lib/content";
+
+const posts = await getVisiblePosts();
+const latestPosts = posts.slice(0, 5);
+---
+
+<BaseLayout>
+  <div class="home-shell">
+    <PersonalOverview />
+
+    <div class="home-content-grid">
+      <section class="latest-section" aria-labelledby="latest-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">RECENT WRITING</p>
+            <h2 id="latest-title">最新文章</h2>
+          </div>
+          <a href={withBase("/posts/")}>查看全部</a>
+        </div>
+        <div class="post-list">
+          {latestPosts.map((post) => <PostCard post={post} />)}
+        </div>
+      </section>
+
+      <HomeSidebar posts={posts} />
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,15 @@
+---
+import site from "../data/site.json";
+import { withBase } from "../lib/content";
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>© {new Date().getFullYear()} {site.author.name} · 内容持续更新中</p>
+    <div class="footer-links">
+      <a href={withBase("/tags/")}>标签</a>
+      <a href={withBase("/rss.xml")}>RSS</a>
+      <a href={site.github.url} rel="me noopener" target="_blank">GitHub</a>
+    </div>
+  </div>
+</footer>

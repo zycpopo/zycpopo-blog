@@ -1,0 +1,30 @@
+---
+import type { BlogPost } from "../lib/content";
+import { formatDate, getColumn, getTag, postSlug, withBase } from "../lib/content";
+
+interface Props {
+  post: BlogPost;
+  compact?: boolean;
+}
+
+const { post, compact = false } = Astro.props;
+const column = getColumn(post.data.column);
+---
+
+<article class:list={["post-card", { compact, draft: post.data.draft }]}>
+  <div class="post-card-meta">
+    <time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time>
+    {column && <a href={withBase(`/columns/${column.id}/`)}>{column.name}</a>}
+    {post.data.draft && <span class="draft-badge">草稿</span>}
+  </div>
+  <h2><a href={withBase(`/posts/${postSlug(post)}/`)}>{post.data.title}</a></h2>
+  <p>{post.data.description}</p>
+  {!compact && post.data.tags.length > 0 && (
+    <ul class="tag-list" aria-label="文章标签">
+      {post.data.tags.map((tagId) => {
+        const tag = getTag(tagId);
+        return tag && <li><a href={withBase(`/tags/${tag.id}/`)}>#{tag.name}</a></li>;
+      })}
+    </ul>
+  )}
+</article>

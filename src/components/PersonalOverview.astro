@@ -1,0 +1,131 @@
+---
+import site from "../data/site.json";
+import { withBase } from "../lib/content";
+import ContributionHeatmap from "./ContributionHeatmap.astro";
+
+const initial = site.author.name.trim().slice(0, 1).toUpperCase() || "Y";
+const location = site.author.location;
+const weatherConfigured = typeof location.latitude === "number" && typeof location.longitude === "number";
+---
+
+<section class="personal-overview" aria-label="个人介绍">
+  <div class="identity-panel">
+    <div class="identity-heading">
+      {site.author.avatar ? (
+        <img class="profile-avatar" src={withBase(site.author.avatar)} alt={`${site.author.name}的头像`} width="104" height="104" />
+      ) : (
+        <span class="profile-avatar avatar-placeholder" aria-hidden="true">{initial}</span>
+      )}
+      <div>
+        <p class="identity-label">HELLO, I AM</p>
+        <h1>{site.author.name}</h1>
+        <p class="identity-role">{site.author.role}</p>
+      </div>
+    </div>
+
+    <div class="local-status" data-timezone={location.timezone} data-latitude={location.latitude} data-longitude={location.longitude}>
+      <div class="status-block">
+        <time id="profile-local-time">--:--:--</time>
+        <small id="profile-local-date">正在读取时间</small>
+      </div>
+      <div class="status-block weather-status">
+        <strong id="profile-weather">{weatherConfigured ? "正在获取天气" : "等待配置城市"}</strong>
+      </div>
+    </div>
+
+    <dl class="personal-links">
+      <div>
+        <dt>GitHub</dt>
+        <dd><a href={site.github.url} target="_blank" rel="me noopener">@{site.github.username}</a></dd>
+      </div>
+      <div>
+        <dt>LeetCode</dt>
+        <dd><a href={site.leetcode.url} target="_blank" rel="me noopener">{site.leetcode.username}</a></dd>
+      </div>
+      <div>
+        <dt>邮箱</dt>
+        <dd>{site.author.email ? <a href={`mailto:${site.author.email}`}>{site.author.email}</a> : "暂未公开"}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="profile-detail-panel">
+    <section class="profile-summary" aria-label="个人简介">
+      <p class="eyebrow">ABOUT ME</p>
+      <p class="profile-bio">{site.author.bio.replace(/\n\s*\n/g, " ")}</p>
+
+      {site.author.interests.length > 0 && (
+        <div class="profile-exploration">
+          <p>Currently, I'm exploring:</p>
+          <ul class="profile-exploration-list" aria-label="技术学习方向">
+            {site.author.interests.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      )}
+    </section>
+
+    <ContributionHeatmap embedded={true} />
+  </div>
+</section>
+
+<script>
+  const status = document.querySelector<HTMLElement>(".local-status");
+  const timeElement = document.querySelector<HTMLTimeElement>("#profile-local-time");
+  const dateElement = document.querySelector<HTMLElement>("#profile-local-date");
+  const weatherElement = document.querySelector<HTMLElement>("#profile-weather");
+
+  if (status && timeElement && dateElement) {
+    const timezone = status.dataset.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const updateClock = () => {
+      const now = new Date();
+      timeElement.dateTime = now.toISOString();
+      timeElement.textContent = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).format(now);
+      dateElement.textContent = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: timezone,
+        month: "long",
+        day: "numeric",
+        weekday: "long"
+      }).format(now);
+    };
+    updateClock();
+    window.setInterval(updateClock, 1000);
+  }
+
+  if (status && weatherElement) {
+    const latitude = Number(status.dataset.latitude);
+    const longitude = Number(status.dataset.longitude);
+    const timezone = status.dataset.timezone || "auto";
+    if (Number.isFinite(latitude) && Number.isFinite(longitude) && status.dataset.latitude && status.dataset.longitude) {
+      const weatherNames: Record<number, string> = {
+        0: "晴朗", 1: "大部晴朗", 2: "局部多云", 3: "阴天",
+        45: "有雾", 48: "雾凇", 51: "小毛毛雨", 53: "毛毛雨", 55: "较强毛毛雨",
+        61: "小雨", 63: "中雨", 65: "大雨", 71: "小雪", 73: "中雪", 75: "大雪",
+        80: "阵雨", 81: "较强阵雨", 82: "强阵雨", 95: "雷暴", 96: "雷暴伴冰雹", 99: "强雷暴伴冰雹"
+      };
+      const endpoint = new URL("https://api.open-meteo.com/v1/forecast");
+      endpoint.searchParams.set("latitude", String(latitude));
+      endpoint.searchParams.set("longitude", String(longitude));
+      endpoint.searchParams.set("current", "temperature_2m,weather_code");
+      endpoint.searchParams.set("timezone", timezone);
+      fetch(endpoint)
+        .then((response) => {
+          if (!response.ok) throw new Error("weather unavailable");
+          return response.json();
+        })
+        .then((data) => {
+          const current = data.current;
+          const description = weatherNames[current.weather_code] ?? "天气更新中";
+          weatherElement.textContent = `${description} · ${Math.round(current.temperature_2m)}°C`;
+        })
+        .catch(() => {
+          weatherElement.textContent = "天气暂不可用";
+        });
+    }
+  }
+</script>

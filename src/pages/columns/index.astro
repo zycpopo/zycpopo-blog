@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageIntro from "../../components/PageIntro.astro";
+import { columns, countByColumn, getVisiblePosts, withBase } from "../../lib/content";
+
+const posts = await getVisiblePosts();
+const visibleColumns = [...columns]
+  .sort((a, b) => a.order - b.order)
+  .filter((column) => countByColumn(posts, column.id) > 0);
+---
+
+<BaseLayout title="专栏" description="按照主题和学习路径浏览文章。">
+  <div class="page-shell">
+    <PageIntro eyebrow="COLUMNS" title="专栏" description="专栏把同一主题的文章放进连续的阅读路径。" />
+    <div class="column-grid">
+      {visibleColumns.map((column, index) => (
+        <a class="column-card" href={withBase(`/columns/${column.id}/`)}>
+          <span class="column-index">{String(index + 1).padStart(2, "0")}</span>
+          <h2>{column.name}</h2>
+          <p>{column.description}</p>
+          <strong>{countByColumn(posts, column.id)} 篇文章</strong>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

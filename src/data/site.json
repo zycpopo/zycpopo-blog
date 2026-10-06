@@ -1,0 +1,30 @@
+{
+  "name": "zycpopo 的技术博客",
+  "description": "记录技术学习、工程实践与持续思考。",
+  "language": "zh-CN",
+  "url": "https://zycpopo.github.io",
+  "base": "/zycpopo-blog",
+  "repository": "zycpopo-blog",
+  "author": {
+    "name": "zycpopo",
+    "role": "开发者 · 技术学习者",
+    "bio": "I'm a Computer Science student who enjoys building things from scratch and figuring out how they work under the hood.\n\nI mainly work with Go, C/C++, and Linux, and I'm particularly interested in backend development, distributed systems, and low-level systems.",
+    "avatar": "/images/avatar-zycpopo-v2-prussian-blue.png",
+    "email": "3368185928@qq.com",
+    "interests": ["Go & Backend Development", "Distributed Systems & Storage", "Linux & Operating Systems", "Building things from scratch"],
+    "location": {
+      "label": "深圳",
+      "timezone": "Asia/Shanghai",
+      "latitude": 22.5431,
+      "longitude": 114.0579
+    }
+  },
+  "github": {
+    "username": "zycpopo",
+    "url": "https://github.com/zycpopo"
+  },
+  "leetcode": {
+    "username": "affectionate-pareznl",
+    "url": "https://leetcode.cn/u/affectionate-pareznl/"
+  }
+}

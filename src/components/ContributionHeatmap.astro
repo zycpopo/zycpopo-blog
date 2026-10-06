@@ -1,0 +1,79 @@
+---
+import contributionData from "../../public/data/contributions.json";
+import site from "../data/site.json";
+
+interface Props { embedded?: boolean }
+const { embedded = false } = Astro.props;
+
+type Day = { date: string; contributionCount: number; level: number };
+type Week = { contributionDays: Day[] };
+
+const data = contributionData as { username?: string; totalContributions: number; weeks: Week[]; updatedAt: string | null };
+const hasData = data.username === site.github.username && data.weeks.length > 0;
+const weeks = hasData ? data.weeks : Array.from({ length: 53 }, () => ({ contributionDays: [] as Day[] }));
+const slots = weeks.map((week) => Array.from({ length: 7 }, (_, weekday) =>
+  week.contributionDays.find((day) => new Date(`${day.date}T00:00:00Z`).getUTCDay() === weekday)
+));
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const months: { label: string; column: number }[] = [];
+weeks.forEach((week, index) => {
+  const day = index === 0 ? week.contributionDays[0] : week.contributionDays.find((day) => day.date.endsWith("-01"));
+  if (day && (index === 0 || weeks.length - index > 1)) {
+    months.push({ label: monthNames[new Date(`${day.date}T00:00:00Z`).getUTCMonth()], column: index + 1 });
+  }
+});
+const dates = hasData ? weeks.flatMap((week) => week.contributionDays.map((day) => day.date)) : [];
+const dateRange = dates.length ? `${dates[0].replaceAll("-", ".")} – ${dates[dates.length - 1].replaceAll("-", ".")}` : "贡献数据暂不可用";
+---
+
+<section class:list={["heatmap-panel", { embedded }]} aria-labelledby="contribution-title">
+  <div class="section-heading compact-heading">
+    <div>
+      <p class="eyebrow">OPEN SOURCE</p>
+      <h2 id="contribution-title">{hasData ? `最近一年 ${data.totalContributions} 次贡献` : "GitHub 贡献"}</h2>
+    </div>
+    <a href={site.github.url} target="_blank" rel="me noopener">查看 GitHub</a>
+  </div>
+
+  <div class="heatmap-frame">
+    <div class="heatmap-scroll" role="img" aria-label={hasData ? `最近一年共 ${data.totalContributions} 次 GitHub 贡献，蓝色深浅表示每日贡献强度` : "GitHub 贡献数据尚未同步"}>
+      <div class="heatmap-calendar" style={`--weeks: ${weeks.length}`}>
+        <div class="heatmap-months" aria-hidden="true">
+          {months.map((month, index) => (
+            <span style={`grid-column: ${month.column} / span ${(months[index + 1]?.column ?? weeks.length + 1) - month.column}`}>{month.label}</span>
+          ))}
+        </div>
+        <div class="heatmap-body">
+          <div class="heatmap-weekdays" aria-hidden="true">
+            <span style="grid-row: 2">Mon</span>
+            <span style="grid-row: 4">Wed</span>
+            <span style="grid-row: 6">Fri</span>
+          </div>
+          <div class:list={["heatmap", { placeholder: !hasData }]}>
+            {slots.map((week) => (
+              <div class="heatmap-week">
+                {week.map((day) => (
+                  <span
+                    class:list={["heatmap-cell", `level-${day?.level ?? 0}`, { "outside-range": hasData && !day }]}
+                    title={day ? `${day.date}：${day.contributionCount} 次贡献` : undefined}
+                    data-date={day?.date}
+                    data-count={day?.contributionCount}
+                    data-level={day?.level}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="heatmap-footer">
+      <span>{dateRange}</span>
+      <div class="heatmap-legend" aria-label="贡献强度从低到高">
+        <span>Less</span>
+        {[0, 1, 2, 3, 4].map((item) => <i class={`heatmap-cell level-${item}`} />)}
+        <span>More</span>
+      </div>
+    </div>
+  </div>
+</section>

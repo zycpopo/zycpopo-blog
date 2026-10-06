@@ -1,0 +1,36 @@
+---
+import type { GetStaticPaths } from "astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { columns, getVisiblePosts, withBase } from "../../lib/content";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getVisiblePosts();
+  return columns
+    .map((column) => ({
+      column,
+      posts: posts.filter((post) => post.data.column === column.id)
+    }))
+    .filter((item) => item.posts.length > 0)
+    .map((item) => ({ params: { column: item.column.id }, props: item }));
+};
+
+const { column, posts } = Astro.props as any;
+---
+
+<BaseLayout title={column.name} description={column.description}>
+  <div class="page-shell narrow-shell">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href={withBase("/columns/")}>全部专栏</a><span>/</span><span>{column.name}</span>
+    </nav>
+    <header class="column-header">
+      <p class="eyebrow">COLUMN</p>
+      <h1>{column.name}</h1>
+      <p>{column.description}</p>
+      <span>{posts.length} 篇文章 · 按发布时间排列</span>
+    </header>
+    <div class="post-list">
+      {posts.map((post: any) => <PostCard post={post} />)}
+    </div>
+  </div>
+</BaseLayout>

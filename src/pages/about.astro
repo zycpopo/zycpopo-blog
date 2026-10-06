@@ -1,0 +1,28 @@
+---
+import { getEntry, render } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import site from "../data/site.json";
+import { withBase } from "../lib/content";
+
+const about = await getEntry("pages", "about");
+if (!about) throw new Error("缺少 src/content/pages/about.md");
+const { Content } = await render(about);
+---
+
+<BaseLayout title={about.data.title} description={about.data.description}>
+  <div class="page-shell about-shell">
+    <aside class="about-aside">
+      {site.author.avatar ? (
+        <img class="about-avatar" src={withBase(site.author.avatar)} alt={`${site.author.name}的头像`} width="92" height="92" />
+      ) : (
+        <span class="avatar-fallback large" aria-hidden="true">{site.author.name.trim().slice(0, 1).toUpperCase() || "Z"}</span>
+      )}
+      <h1>{site.author.name}</h1>
+      {site.author.bio.split(/\n\s*\n/).map((paragraph) => <p>{paragraph}</p>)}
+      <a class="primary-button" href={site.github.url} target="_blank" rel="me noopener">访问 GitHub</a>
+    </aside>
+    <article class="prose about-content">
+      <Content />
+    </article>
+  </div>
+</BaseLayout>

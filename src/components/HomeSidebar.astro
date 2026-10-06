@@ -1,0 +1,32 @@
+---
+import type { BlogPost } from "../lib/content";
+import { columns, countByColumn, withBase } from "../lib/content";
+
+interface Props { posts: BlogPost[] }
+const { posts } = Astro.props;
+const visibleColumns = [...columns]
+  .sort((a, b) => a.order - b.order)
+  .filter((column) => countByColumn(posts, column.id) > 0);
+---
+
+<aside class="home-sidebar" aria-label="专栏导航">
+  <div class="section-heading sidebar-heading">
+    <div>
+      <p class="eyebrow">COLUMNS</p>
+      <h2>专栏</h2>
+    </div>
+    <a href={withBase("/columns/")}>查看全部</a>
+  </div>
+  <section class="sidebar-section">
+    <ul class="column-nav">
+      {visibleColumns.map((column) => (
+        <li>
+          <a href={withBase(`/columns/${column.id}/`)}>
+            <span>{column.name}</span>
+            <strong>{countByColumn(posts, column.id)}</strong>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</aside>

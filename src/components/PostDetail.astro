@@ -1,0 +1,121 @@
+---
+import type { MarkdownHeading } from "astro";
+import type { BlogPost } from "../lib/content";
+import { formatDate, getColumn, getTag, postSlug, withBase } from "../lib/content";
+
+interface Props {
+  post: BlogPost;
+  Content: any;
+  headings: MarkdownHeading[];
+  previous?: BlogPost;
+  next?: BlogPost;
+}
+
+const { post, Content, headings, previous, next } = Astro.props;
+const column = getColumn(post.data.column);
+const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+<article class:list={["article-page", { "has-toc": tocHeadings.length > 0 }]}>
+  <header class="article-header">
+    <div class="article-kicker">
+      {column && <a href={withBase(`/columns/${column.id}/`)}>{column.name}</a>}
+      {post.data.draft && <span class="draft-badge">草稿预览</span>}
+    </div>
+    <h1>{post.data.title}</h1>
+    <p class="article-description">{post.data.description}</p>
+    <div class="article-dates">
+      <span>发布于 <time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time></span>
+      {post.data.updatedDate && <span>更新于 <time datetime={post.data.updatedDate.toISOString()}>{formatDate(post.data.updatedDate)}</time></span>}
+    </div>
+    {post.data.tags.length > 0 && (
+      <ul class="tag-list" aria-label="文章标签">
+        {post.data.tags.map((tagId) => {
+          const tag = getTag(tagId);
+          return tag && <li><a href={withBase(`/tags/${tag.id}/`)}>#{tag.name}</a></li>;
+        })}
+      </ul>
+    )}
+  </header>
+
+  <div class="article-body">
+    {tocHeadings.length > 0 && (
+      <aside class="article-toc" aria-label="文章目录" data-article-toc data-state="expanded">
+        <div class="toc-positioner">
+          <button class="toc-toggle" type="button" aria-controls="article-toc-content" aria-expanded="true" aria-label="收起目录" title="收起目录" hidden>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
+          <div id="article-toc-content" class="toc-panel" data-toc-panel>
+            <strong>本文目录</strong>
+            <ol>
+              {tocHeadings.map((heading) => (
+                <li class={`depth-${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </aside>
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+  </div>
+
+  <nav class="post-navigation" aria-label="专栏文章导航">
+    {previous ? (
+      <a href={withBase(`/posts/${postSlug(previous)}/`)}>
+        <span>上一篇</span>
+        <strong>{previous.data.title}</strong>
+      </a>
+    ) : <span />}
+    {next ? (
+      <a class="next" href={withBase(`/posts/${postSlug(next)}/`)}>
+        <span>下一篇</span>
+        <strong>{next.data.title}</strong>
+      </a>
+    ) : <span />}
+  </nav>
+</article>
+
+<script>
+  const initializeArticleToc = () => {
+    document.querySelectorAll<HTMLElement>("[data-article-toc]").forEach((toc) => {
+      if (toc.dataset.ready) return;
+      const toggle = toc.querySelector<HTMLButtonElement>(".toc-toggle");
+      const panel = toc.querySelector<HTMLElement>("[data-toc-panel]");
+      if (!toggle || !panel) return;
+
+      const wideScreen = window.matchMedia("(min-width: 1280px)");
+      const setExpanded = (expanded: boolean, returnFocus = false) => {
+        toc.dataset.state = expanded ? "expanded" : "collapsed";
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.setAttribute("aria-label", expanded ? "收起目录" : "展开目录");
+        toggle.title = expanded ? "收起目录" : "展开目录";
+        panel.inert = !expanded;
+        panel.setAttribute("aria-hidden", String(!expanded));
+        if (returnFocus) toggle.focus({ preventScroll: true });
+      };
+
+      toc.dataset.ready = "true";
+      toggle.hidden = false;
+      setExpanded(wideScreen.matches);
+      toggle.addEventListener("click", () => setExpanded(toggle.getAttribute("aria-expanded") !== "true"));
+      toc.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && toc.dataset.state === "expanded") {
+          event.preventDefault();
+          setExpanded(false, true);
+        }
+      });
+      panel.addEventListener("click", (event) => {
+        if (!wideScreen.matches && event.target instanceof Element && event.target.closest("a")) setExpanded(false);
+      });
+      wideScreen.addEventListener("change", (event) => setExpanded(event.matches));
+    });
+  };
+
+  initializeArticleToc();
+  document.addEventListener("astro:page-load", initializeArticleToc);
+</script>

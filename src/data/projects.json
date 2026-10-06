@@ -1,0 +1,12 @@
+[
+  {
+    "name": "个人技术博客",
+    "description": "一个以长期写作和内容维护为核心的静态技术博客。",
+    "technologies": ["Astro", "TypeScript", "Markdown"],
+    "status": "进行中",
+    "sourceUrl": "",
+    "demoUrl": "",
+    "image": "",
+    "order": 1
+  }
+]
